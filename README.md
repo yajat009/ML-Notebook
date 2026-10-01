@@ -1,53 +1,57 @@
 # ML-Explore
 
-Implementing a neural network framework from scratch — based on [toy_ml_framework](https://github.com/sidracha/toy_ml_framework).
+Implementing a neural network framework from scratch in C++.
+Based on [toy_ml_framework](https://github.com/sidracha/toy_ml_framework).
 
 No libraries. Every concept built by hand.
 
 ---
 
+## Structure
+
+```
+ML-Explore/
+├── include/        # Header files (.h)  — class/function declarations
+├── src/            # Source files (.cc) — implementations
+└── Makefile
+```
+
 ## Topic List
 
-| # | Folder | What to implement |
-|---|--------|-------------------|
-| 1 | `01_tensor/` | Tensor data structure: data, grad, shape, stride; strided indexing; permute; transpose |
-| 2 | `02_matmul/` | 2D matrix multiply (GEMM), batched GEMM, bias add |
-| 3 | `03_autograd/` | Computational graph (predecessor edges, node ownership); topological sort; backward traversal; gradient accumulation |
-| 4 | `03_autograd/grad_fns.py` | Chain-rule backward functions for every op: add, sub, mul, div, pow, exp, matmul, bias add, transpose |
-| 5 | `04_activations/` | ReLU, Sigmoid, Softmax — forward AND backward |
-| 6 | `04_activations/` | Concat along a dim — forward AND backward |
-| 7 | `05_layers/` | Abstract Layer interface: `forward`, `zero_grad`, `gradient_descent_step` |
-| 8 | `05_layers/linear.py` | Linear layer: `Wx + b`, random weight init |
-| 9 | `05_layers/mlp.py` | MLP: stacked Linear layers with activations |
-| 10 | `06_loss/mse.py` | MSE Loss — forward AND backward |
-| 11 | `07_optimizer/sgd.py` | SGD optimizer: `zero_grad`, `step` |
-| 12 | `08_attention/` | Scaled dot-product attention: `QK^T / sqrt(d)` → softmax → `V` |
-| 13 | `08_attention/` | Multi-head self-attention: Q/K/V projections, per-head compute, output projection |
-| 14 | `08_attention/` | Attention block: Self-Attention + MLP |
-| 15 | `09_training/` | Training loop: forward → loss → backward → optimizer step |
+| # | Header | Source | What to implement |
+|---|--------|--------|-------------------|
+| 1 | `tensor.h` | `tensor.cc` | Tensor class: data, grad, shape, stride; strided indexing; permute; transpose |
+| 2 | `tensor_ops.h` | `tensor_ops.cc` | Element-wise ops: +, -, *, /, pow, exp |
+| 3 | `calc.h` | `calc.cc` | Odometer (n-dim index iteration); 2D GEMM; batched GEMM; bias add |
+| 4 | `tensor_grad.h` | `tensor_grad.cc` | Backward fns for every op: add, sub, mul, div, pow, matmul, bias add, transpose |
+| 5 | `nn.h` | `nn.cc` | ReLU, Sigmoid, Softmax, Concat — forward + backward |
+| 6 | `layer.h` | *(header-only)* | Abstract Layer: `forward`, `zero_grad`, `gradient_descent_step`; SequentialLayer; Model |
+| 7 | `linear.h` | `linear.cc` | Linear layer (Wx + b); LinearReLU; LinearSigmoid; MLP |
+| 8 | `losses.h` | `losses.cc` | MSE Loss — forward + backward |
+| 9 | `optimizer.h` | `optimizer.cc` | SGD: `zero_grad`, `step` |
+| 10 | `attention.h` | `attention.cc` | Scaled dot-product attention; multi-head SelfAttn; SelfAttnBlock |
+| 11 | `train_loop.h` | `train_loop.cc` | Data generation; training loop |
+| 12 | *(none)* | `main.cc` | Entry point — wire everything together |
 
-## Suggested Build Order
-
-Build bottom-up — each layer depends on the one before it:
+## Build Order
 
 ```
-Tensor → Element-wise ops → GEMM
+tensor → tensor_ops → calc
        ↓
-Computational graph + backward fns
+tensor_grad  (backward fns for all ops above)
        ↓
-Activations (ReLU, Sigmoid, Softmax, Concat)
+nn  (activations)
        ↓
-Layer abstraction → Linear → MLP
+layer → linear → losses → optimizer
        ↓
-MSE Loss + SGD
-       ↓
-Attention → Attention Block
-       ↓
-Training loop
+attention → train_loop → main
 ```
 
-## Rules
+## C++ Concepts You'll Need
 
-- No external libraries (no numpy, torch, etc.)
-- Each file implements one concept end-to-end
-- Implement forward AND backward for every operation
+- Classes, constructors, operator overloading
+- `std::vector`, `std::shared_ptr`, `std::unique_ptr`
+- `std::function` (for storing backward fns)
+- Templates (SequentialLayer::register_layer)
+- Virtual functions / abstract base classes
+- Move semantics
